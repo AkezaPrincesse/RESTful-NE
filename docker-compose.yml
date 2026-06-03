@@ -1,0 +1,155 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: fems-postgres
+    environment:
+      POSTGRES_DB: fems_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: fems_password_2024
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./database/migrations/001_init_schema.sql:/docker-entrypoint-initdb.d/01_schema.sql
+      - ./database/seeds/001_seed_data.sql:/docker-entrypoint-initdb.d/02_seeds.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - fems-network
+
+  user-service:
+    build: ./backend/user-service
+    container_name: fems-user-service
+    environment:
+      PORT: 3001
+      NODE_ENV: production
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: fems_db
+      DB_USER: postgres
+      DB_PASSWORD: fems_password_2024
+      JWT_SECRET: fems_super_secret_jwt_key_2024_production
+      JWT_EXPIRES_IN: 24h
+      JWT_REFRESH_SECRET: fems_refresh_secret_2024
+      FRONTEND_URL: http://localhost:5173
+    ports:
+      - "3001:3001"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - fems-network
+    restart: unless-stopped
+
+  extinguisher-service:
+    build: ./backend/extinguisher-service
+    container_name: fems-extinguisher-service
+    environment:
+      PORT: 3002
+      NODE_ENV: production
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: fems_db
+      DB_USER: postgres
+      DB_PASSWORD: fems_password_2024
+      JWT_SECRET: fems_super_secret_jwt_key_2024_production
+      FRONTEND_URL: http://localhost:5173
+    ports:
+      - "3002:3002"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - fems-network
+    restart: unless-stopped
+
+  inspection-service:
+    build: ./backend/inspection-service
+    container_name: fems-inspection-service
+    environment:
+      PORT: 3003
+      NODE_ENV: production
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: fems_db
+      DB_USER: postgres
+      DB_PASSWORD: fems_password_2024
+      JWT_SECRET: fems_super_secret_jwt_key_2024_production
+      FRONTEND_URL: http://localhost:5173
+    ports:
+      - "3003:3003"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - fems-network
+    restart: unless-stopped
+
+  reporting-service:
+    build: ./backend/reporting-service
+    container_name: fems-reporting-service
+    environment:
+      PORT: 3004
+      NODE_ENV: production
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: fems_db
+      DB_USER: postgres
+      DB_PASSWORD: fems_password_2024
+      JWT_SECRET: fems_super_secret_jwt_key_2024_production
+      FRONTEND_URL: http://localhost:5173
+    ports:
+      - "3004:3004"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - fems-network
+    restart: unless-stopped
+
+  api-gateway:
+    build: ./backend/api-gateway
+    container_name: fems-api-gateway
+    environment:
+      PORT: 3000
+      NODE_ENV: production
+      USER_SERVICE_URL: http://user-service:3001
+      EXTINGUISHER_SERVICE_URL: http://extinguisher-service:3002
+      INSPECTION_SERVICE_URL: http://inspection-service:3003
+      REPORTING_SERVICE_URL: http://reporting-service:3004
+      FRONTEND_URL: http://localhost:5173
+    ports:
+      - "3000:3000"
+    depends_on:
+      - user-service
+      - extinguisher-service
+      - inspection-service
+      - reporting-service
+    networks:
+      - fems-network
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: fems-frontend
+    ports:
+      - "5173:80"
+    depends_on:
+      - api-gateway
+    networks:
+      - fems-network
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+
+networks:
+  fems-network:
+    driver: bridge

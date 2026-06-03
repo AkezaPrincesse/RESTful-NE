@@ -1,0 +1,24 @@
+{
+  "name": "fems",
+  "version": "1.0.0",
+  "description": "TWZ Ltd Fire Extinguisher Management System",
+  "scripts": {
+    "install:all": "npm run install:user && npm run install:extinguisher && npm run install:inspection && npm run install:reporting && npm run install:gateway && npm run install:frontend",
+    "install:user":         "cd backend/user-service && npm install",
+    "install:extinguisher": "cd backend/extinguisher-service && npm install",
+    "install:inspection":   "cd backend/inspection-service && npm install",
+    "install:reporting":    "cd backend/reporting-service && npm install",
+    "install:gateway":      "cd backend/api-gateway && npm install",
+    "install:frontend":     "cd frontend && npm install",
+    "dev:user":         "cd backend/user-service && npm run dev",
+    "dev:extinguisher": "cd backend/extinguisher-service && npm run dev",
+    "dev:inspection":   "cd backend/inspection-service && npm run dev",
+    "dev:reporting":    "cd backend/reporting-service && npm run dev",
+    "dev:gateway":      "cd backend/api-gateway && npm run dev",
+    "dev:frontend":     "cd frontend && npm run dev",
+    "docker:up":   "docker-compose up -d",
+    "docker:down": "docker-compose down",
+    "docker:build": "docker-compose build",
+    "docker:logs": "docker-compose logs -f"
+  }
+}
