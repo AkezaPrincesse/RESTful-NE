@@ -5,7 +5,7 @@ const logger = require('../config/logger');
 exports.getProfile = async (req, res) => {
   try {
     const result = await pool.query(
-      `SELECT id, first_name, last_name, email, role, phone, department, is_active, created_at, updated_at
+      `SELECT id, first_name, last_name, email, role, phone, department, is_active, first_login, status, created_at, updated_at
        FROM users WHERE id = $1`,
       [req.user.id]
     );
@@ -43,7 +43,10 @@ exports.changePassword = async (req, res) => {
     }
     const salt = await bcrypt.genSalt(10);
     const password_hash = await bcrypt.hash(new_password, salt);
-    await pool.query('UPDATE users SET password_hash = $1 WHERE id = $2', [password_hash, req.user.id]);
+    await pool.query(
+      'UPDATE users SET password_hash = $1, first_login = false, status = CASE WHEN status = $2 THEN $3 ELSE status END WHERE id = $4',
+      [password_hash, 'pending', 'active', req.user.id]
+    );
     res.json({ success: true, message: 'Password changed successfully' });
   } catch (error) {
     logger.error('Change password error:', error);

@@ -29,6 +29,7 @@ const authController = require('../controllers/authController');
  *       422: { description: Validation error }
  */
 router.post('/register', validate(schemas.register), authController.register);
+router.post('/create-admin', validate(schemas.createAdmin), authController.createAdmin);
 
 /**
  * @swagger

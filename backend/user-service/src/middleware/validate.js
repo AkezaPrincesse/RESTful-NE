@@ -30,6 +30,38 @@ const schemas = {
     role: Joi.string().valid('admin', 'inspector', 'user').default('user'),
   }),
 
+  createAdmin: Joi.object({
+    first_name: Joi.string().min(2).max(100).required().label('First name'),
+    last_name: Joi.string().min(2).max(100).required().label('Last name'),
+    email: Joi.string().email().required().label('Email'),
+    password: Joi.string()
+      .min(8)
+      .pattern(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/)
+      .required()
+      .messages({
+        'string.pattern.base': 'Password must contain uppercase, lowercase, number and special character',
+      })
+      .label('Password'),
+    phone: Joi.string().optional().allow(''),
+    department: Joi.string().optional().allow(''),
+  }),
+
+  createInspector: Joi.object({
+    first_name:  Joi.string().min(2).max(100).required().label('First name'),
+    last_name:   Joi.string().min(2).max(100).required().label('Last name'),
+    email:       Joi.string().email().required().label('Email'),
+    phone:       Joi.string().optional().allow(''),
+    department:  Joi.string().optional().allow(''),
+  }),
+
+  updateInspector: Joi.object({
+    first_name:  Joi.string().min(2).max(100).optional(),
+    last_name:   Joi.string().min(2).max(100).optional(),
+    phone:       Joi.string().optional().allow(''),
+    department:  Joi.string().optional().allow(''),
+    is_active:   Joi.boolean().optional(),
+  }),
+
   login: Joi.object({
     email: Joi.string().email().required(),
     password: Joi.string().required(),

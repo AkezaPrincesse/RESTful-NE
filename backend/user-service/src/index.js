@@ -9,6 +9,7 @@ const path = require('path');
 
 const authRoutes = require('./routes/auth.routes');
 const userRoutes = require('./routes/user.routes');
+const inspectorRoutes = require('./routes/inspector.routes');
 const logger = require('./config/logger');
 
 const app = express();
@@ -65,6 +66,7 @@ app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerDoc));
 // Routes
 app.use('/api/auth', authLimiter, authRoutes);
 app.use('/api/users', userRoutes);
+app.use('/api/inspectors', inspectorRoutes);
 
 // Health check
 app.get('/health', (req, res) => {

@@ -57,6 +57,7 @@ const proxyOpts = (target) => ({
 // Route proxies
 app.use('/api/auth',          createProxyMiddleware(proxyOpts(SERVICES.USER)));
 app.use('/api/users',         createProxyMiddleware(proxyOpts(SERVICES.USER)));
+app.use('/api/inspectors',    createProxyMiddleware(proxyOpts(SERVICES.USER)));
 app.use('/api/extinguishers', createProxyMiddleware(proxyOpts(SERVICES.EXTINGUISHER)));
 app.use('/api/inspections',   createProxyMiddleware({ ...proxyOpts(SERVICES.INSPECTION), pathRewrite: { '^/api/inspections': '/api/inspections' } }));
 app.use('/api/maintenance',   createProxyMiddleware({ ...proxyOpts(SERVICES.INSPECTION), pathRewrite: { '^/api/maintenance': '/api/maintenance' } }));

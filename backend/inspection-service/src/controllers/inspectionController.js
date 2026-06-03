@@ -1,5 +1,6 @@
 const pool = require('../config/db');
 const logger = require('../config/logger');
+const { sendEmail, inspectionScheduledEmail } = require('../config/email');
 
 exports.scheduleInspection = async (req, res) => {
   try {
@@ -52,6 +53,35 @@ exports.scheduleInspection = async (req, res) => {
       'UPDATE extinguishers SET next_inspection_date = $1 WHERE id = $2',
       [scheduled_date, extinguisher_id]
     );
+
+    // Email extinguisher owner about upcoming inspection
+    try {
+      const ownerRes = await pool.query(
+        `SELECT u.first_name || ' ' || u.last_name AS name, u.email
+         FROM extinguishers e JOIN users u ON u.id = e.registered_by
+         WHERE e.id = $1 AND u.email IS NOT NULL`,
+        [extinguisher_id]
+      );
+      if (ownerRes.rows[0]) {
+        let inspectorName = null;
+        if (assigned_inspector) {
+          const insp = await pool.query(
+            "SELECT first_name || ' ' || last_name AS name FROM users WHERE id = $1", [assigned_inspector]
+          );
+          if (insp.rows[0]) inspectorName = insp.rows[0].name;
+        }
+        const { subject, html } = inspectionScheduledEmail({
+          ownerName: ownerRes.rows[0].name,
+          serialNumber: ext.rows[0].serial_number,
+          location: ext.rows[0].location,
+          scheduledDate: scheduled_date,
+          inspectorName,
+        });
+        await sendEmail({ to: ownerRes.rows[0].email, subject, html });
+      }
+    } catch (emailErr) {
+      logger.error('Inspection owner email failed:', emailErr.message);
+    }
 
     logger.info(`Inspection scheduled: ${result.rows[0].id} for extinguisher ${extinguisher_id}`);
     res.status(201).json({ success: true, message: 'Inspection scheduled', data: { inspection: result.rows[0] } });

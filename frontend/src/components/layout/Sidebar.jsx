@@ -1,10 +1,11 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard, Flame, ClipboardCheck, Wrench,
-  BarChart3, Users, User, LogOut, X, Shield, Bell
+  BarChart3, Users, User, LogOut, X, Shield, UserCog
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext.jsx';
+import ConfirmDialog from '../ConfirmDialog.jsx';
 import clsx from 'clsx';
 
 const navItems = [
@@ -13,12 +14,14 @@ const navItems = [
   { to: '/inspections',  icon: ClipboardCheck,  label: 'Inspections',   roles: ['admin', 'inspector', 'user'] },
   { to: '/maintenance',  icon: Wrench,          label: 'Maintenance',   roles: ['admin', 'inspector'] },
   { to: '/reports',      icon: BarChart3,       label: 'Reports',       roles: ['admin', 'inspector'] },
+  { to: '/inspectors',   icon: UserCog,         label: 'Inspectors',    roles: ['admin'] },
   { to: '/users',        icon: Users,           label: 'Users',         roles: ['admin'] },
 ];
 
 export default function Sidebar({ open, onClose }) {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
   const handleLogout = async () => {
     await logout();
@@ -104,7 +107,7 @@ export default function Sidebar({ open, onClose }) {
             My Profile
           </NavLink>
           <button
-            onClick={handleLogout}
+            onClick={() => setShowLogoutConfirm(true)}
             className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-red-600 hover:bg-red-50 transition-all"
           >
             <LogOut size={18} />
@@ -112,6 +115,17 @@ export default function Sidebar({ open, onClose }) {
           </button>
         </div>
       </aside>
+
+      <ConfirmDialog
+        open={showLogoutConfirm}
+        onClose={() => setShowLogoutConfirm(false)}
+        onConfirm={handleLogout}
+        variant="logout"
+        title="Sign Out"
+        message="Are you sure you want to sign out of FEMS?"
+        confirmText="Yes, Sign Out"
+        cancelText="Stay"
+      />
     </>
   );
 }

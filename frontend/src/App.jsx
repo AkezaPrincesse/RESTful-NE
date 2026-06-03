@@ -6,6 +6,7 @@ import Layout from './components/layout/Layout.jsx';
 import LoginPage from './pages/auth/LoginPage.jsx';
 import RegisterPage from './pages/auth/RegisterPage.jsx';
 import ForgotPasswordPage from './pages/auth/ForgotPasswordPage.jsx';
+import CreateAdminPage from './pages/auth/CreateAdminPage.jsx';
 
 import Dashboard from './pages/Dashboard.jsx';
 import ExtinguisherList from './pages/extinguishers/ExtinguisherList.jsx';
@@ -37,6 +38,7 @@ export default function App() {
       <Route path="/login" element={isAuthenticated ? <Navigate to="/dashboard" /> : <LoginPage />} />
       <Route path="/register" element={isAuthenticated ? <Navigate to="/dashboard" /> : <RegisterPage />} />
       <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+      <Route path="/create-admin" element={<CreateAdminPage />} />
 
       {/* Protected routes */}
       <Route element={<ProtectedRoute><Layout /></ProtectedRoute>}>

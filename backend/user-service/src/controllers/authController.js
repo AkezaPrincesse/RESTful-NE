@@ -3,6 +3,7 @@ const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 const pool = require('../config/db');
 const logger = require('../config/logger');
+const { sendEmail, passwordResetEmail } = require('../config/email');
 
 const generateTokens = (userId, role) => {
   const accessToken = jwt.sign(
@@ -98,6 +99,8 @@ exports.login = async (req, res) => {
           role: user.role,
           phone: user.phone,
           department: user.department,
+          first_login: user.first_login,
+          status: user.status,
         },
       },
     });
@@ -160,8 +163,9 @@ exports.forgotPassword = async (req, res) => {
       [token, expires, result.rows[0].id]
     );
 
-    // In production: send email with reset link
-    logger.info(`Password reset requested for: ${email}, token: ${token}`);
+    const resetUrl = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/reset-password?token=${token}`;
+    const { subject, html } = passwordResetEmail({ firstName: result.rows[0].first_name, resetUrl });
+    try { await sendEmail({ to: email.toLowerCase(), subject, html }); } catch (e) { logger.error('Reset email failed:', e.message); }
 
     res.json({
       success: true,
@@ -171,6 +175,37 @@ exports.forgotPassword = async (req, res) => {
     });
   } catch (error) {
     logger.error('Forgot password error:', error);
+    res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+};
+
+exports.createAdmin = async (req, res) => {
+  try {
+    const { first_name, last_name, email, password, phone, department } = req.body;
+
+    const existing = await pool.query('SELECT id FROM users WHERE email = $1', [email.toLowerCase()]);
+    if (existing.rows.length > 0) {
+      return res.status(409).json({ success: false, message: 'Email already registered' });
+    }
+
+    const salt = await bcrypt.genSalt(10);
+    const password_hash = await bcrypt.hash(password, salt);
+
+    const result = await pool.query(
+      `INSERT INTO users (first_name, last_name, email, password_hash, role, phone, department)
+       VALUES ($1, $2, $3, $4, 'admin', $5, $6)
+       RETURNING id, first_name, last_name, email, role, phone, department, created_at`,
+      [first_name, last_name, email.toLowerCase(), password_hash, phone || null, department || null]
+    );
+
+    logger.info(`Admin created: ${email}`);
+    res.status(201).json({
+      success: true,
+      message: 'Admin account created successfully',
+      data: { user: result.rows[0] },
+    });
+  } catch (error) {
+    logger.error('Create admin error:', error);
     res.status(500).json({ success: false, message: 'Internal server error' });
   }
 };
